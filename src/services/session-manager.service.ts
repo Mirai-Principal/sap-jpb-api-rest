@@ -5,7 +5,7 @@ class sessionManager {
     private routeId: string | null = null;
 
     // singleton
-    async request(endpoint: string, method = "GET", body?: unknown): Promise<any> {
+    async request(endpoint: string, method: "GET" | "POST" | "PATCH" | "DELETE" = "GET", body?: unknown): Promise<any> {
         if (!this.sessionId) {
             await this.login();
         }

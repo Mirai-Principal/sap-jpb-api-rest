@@ -3,7 +3,7 @@ import sessionManager from "../services/session-manager.service";
 
 
 export const getUsers = async (_req: Request, res: Response) => {
-  await sessionManager.request("Items?$top=5").then((data: any) => {
+  await sessionManager.request("BusinessPartners?$select=CardCode,CardName,Address&$top=5").then((data: any) => {
     console.info("✅ Items obtenidos exitosamente");
     res.status(200).json({
       message: "Users",

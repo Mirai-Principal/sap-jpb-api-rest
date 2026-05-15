@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
 
 import { openApiDocument } from "./docs/openapi";
@@ -11,6 +12,7 @@ import { apiRouter } from "./routes";
 export const createApp = () => {
   const app = express();
 
+  app.use(morgan('dev'));
   app.use(helmet());
   app.use(cors());
   app.use(express.json());
