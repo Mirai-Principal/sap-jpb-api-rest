@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
-import { loginSap as loginSapService } from "../services/sap.service";
+import sessionManager from "../services/session-manager.service";
 
 export const loginSap = async (_req: Request, res: Response) => {
     try {
-        const data = await loginSapService();
+        const data = await sessionManager.login();
         res.status(200).json({
             message: "Login SAP",
             data,

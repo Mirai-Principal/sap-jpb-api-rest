@@ -6,4 +6,4 @@ import { sapRouter } from "./sap.routers";
 export const apiRouter = Router();
 
 apiRouter.use("/users", userRouter);
-apiRouter.use("/sap", sapRouter);
+apiRouter.use("/auth", sapRouter);
