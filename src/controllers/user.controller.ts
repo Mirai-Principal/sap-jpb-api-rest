@@ -1,35 +1,19 @@
 import type { Request, Response } from "express";
+import sessionManager from "../services/session-manager.service";
 
-const users = [
-  {
-    id: "1",
-    name: "Usuario Demo",
-    email: "demo@example.com",
-  },
-  {
-    id: "2",
-    name: "Usuario Demo 2",
-    email: "demo2@example.com",
-  },
-];
 
-export const getUsers = (_req: Request, res: Response) => {
-  res.status(200).json({
-    data: users,
-  });
-};
-
-export const getUserById = (req: Request, res: Response) => {
-  const user = users.find((currentUser) => currentUser.id === req.params.id);
-
-  if (!user) {
-    res.status(404).json({
-      message: "Usuario no encontrado",
+export const getUsers = async (_req: Request, res: Response) => {
+  await sessionManager.request("Items?$top=5").then((data: any) => {
+    console.info("✅ Items obtenidos exitosamente");
+    res.status(200).json({
+      message: "Users",
+      data: data,
+    })
+  }).catch((error: any) => {
+    console.error("❌ ERROR: obteniendo items \n", error);
+    res.status(500).json({
+      message: "Error al obtener los items",
+      error: error,
     });
-    return;
-  }
-
-  res.status(200).json({
-    data: user,
   });
 };
