@@ -2,10 +2,10 @@ import { env } from "../config/env";
 
 class sessionManager {
     private sessionId: string | null = null;
+    private routeId: string | null = null;
 
     // singleton
-
-    async request(endpoint: string): Promise<any> {
+    async request(endpoint: string, method = "GET", body?: unknown): Promise<any> {
         if (!this.sessionId) {
             await this.login();
         }
@@ -13,9 +13,12 @@ class sessionManager {
         const response = await fetch(
             `${env.sap.sapUrl}/${endpoint}`,
             {
+                method,
                 headers: {
-                    Cookie: `B1SESSION=${this.sessionId}`
-                }
+                    "Content-Type": "application/json",
+                    Cookie: `B1SESSION=${this.sessionId}; ROUTEID=${this.routeId}`
+                },
+                body: body ? JSON.stringify(body) : undefined
             }
         );
 
@@ -66,11 +69,15 @@ class sessionManager {
             console.error("❌ SAP API error:", response.status, response.statusText, "\nResponse:", text);
             throw new Error(`SAP API error: ${response.status} ${response.statusText}\nResponse: ${text}`);
         }
-        const cookies = response.headers.get("set-cookie");
 
+        const cookies = response.headers.get("set-cookie");
+        // extraer routeid
+        const routeIdMatch = cookies?.match(/ROUTEID=([^;]+)/);
+        this.routeId = routeIdMatch ? routeIdMatch[1] : null;
         console.info("Cookies:", cookies);
 
         const data = await response.json();
+        console.info("Data:", data);
         this.sessionId = data.SessionId;
         return data;
     }
