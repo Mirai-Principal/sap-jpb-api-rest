@@ -3,7 +3,7 @@ import sessionManager from "../services/session-manager.service";
 
 
 export const getUsers = async (_req: Request, res: Response) => {
-  await sessionManager.request("BusinessPartners?$select=CardCode,CardName,Address&$top=5").then((data: any) => {
+  await sessionManager.request("/StockTransfers(32537)").then((data: any) => {
     console.info("✅ Items obtenidos exitosamente");
     res.status(200).json({
       message: "Users",
@@ -13,7 +13,7 @@ export const getUsers = async (_req: Request, res: Response) => {
     console.error("❌ ERROR: obteniendo items \n", error);
     res.status(500).json({
       message: "Error al obtener los items",
-      error: error,
+      error: error.message,
     });
   });
 };
