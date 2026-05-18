@@ -1,11 +1,28 @@
 import { env } from "../config/env";
 
+interface SapErrorResponse {
+    error?: {
+        code?: number;
+        message?: {
+            value?: string;
+        };
+    };
+}
+
+interface SapLoginResponse {
+    SessionId: string;
+}
+
+/**
+ * Session manager for SAP B1
+ * Handles authentication and session management
+ */
 class sessionManager {
     private sessionId: string | null = null;
     private routeId: string | null = null;
 
     // singleton
-    async request(endpoint: string, method: "GET" | "POST" | "PATCH" | "DELETE" = "GET", body?: unknown): Promise<any> {
+    async request(endpoint: string, method: "GET" | "POST" | "PATCH" | "DELETE" = "GET", body?: unknown): Promise<unknown> {
         if (!this.sessionId) {
             await this.login();
         }
@@ -22,15 +39,15 @@ class sessionManager {
             }
         );
 
-        const data = await response.json();
+        const data = (await response.json()) as SapErrorResponse;
 
-        // sesión inválida
+        // sesion invalida
         if (data?.error?.code === 301) {
             console.error("❌ Session expired, relogin...");
             console.info("🔄 Relogin SAP...");
             await this.login();
             console.info("✅ Session reestablished");
-            // retry automático
+            // retry automatico
             return this.request(endpoint);
         }
 
@@ -74,10 +91,10 @@ class sessionManager {
         // extraer routeid
         const routeIdMatch = cookies?.match(/ROUTEID=([^;]+)/);
         this.routeId = routeIdMatch ? routeIdMatch[1] : null;
-        console.info("Cookies:", cookies);
+        console.info("✅ Cookies:", cookies);
 
-        const data = await response.json();
-        console.info("Data:", data);
+        const data = (await response.json()) as SapLoginResponse;
+        console.info("✅ Data:", data);
         this.sessionId = data.SessionId;
         return data;
     }

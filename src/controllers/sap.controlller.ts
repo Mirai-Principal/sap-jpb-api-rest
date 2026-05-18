@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+
 import sessionManager from "../services/session-manager.service";
 
 export const loginSap = async (_req: Request, res: Response) => {
@@ -8,11 +9,13 @@ export const loginSap = async (_req: Request, res: Response) => {
             message: "Login SAP",
             data,
         });
-    } catch (error: any) {
-        console.error("❌ ERROR: autenticando con SAP \n", error);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Error desconocido";
+
+        console.error("ERROR: autenticando con SAP \n", error);
         res.status(500).json({
             message: "Error al autenticar con SAP",
-            error: error.message,
+            error: message,
         });
     }
 };
