@@ -56,16 +56,15 @@ class HanaDbConnection {
 
   async connect() {
     if (this.connection) {
-      console.info("✅ Conexion SAP HANA DB existente");
       return Promise.resolve(this.connection);
     }
 
     if (this.connectionPromise) {
-      console.info("✅ Conexion SAP HANA DB en proceso...");
+      console.info("⌛ Conexion SAP HANA DB en proceso...");
       return this.connectionPromise;
     }
 
-    console.info("✅ Conectando a SAP HANA DB, esquema:", env.hana.schema);
+    console.info("⌛ Conectando a SAP HANA DB, esquema:", env.hana.schema);
     const connection = hanaClient.createConnection();
 
     this.connectionPromise = new Promise<HanaConnection>((resolve, reject) => {
@@ -127,7 +126,7 @@ class HanaDbConnection {
   ): Promise<T[]> {
     const connection = await this.connect();
 
-    console.info("✅ Ejecutando consulta SAP HANA DB:", sql);
+    // console.info("✅ Ejecutando consulta SAP HANA DB:", sql);
 
     return new Promise<T[]>((resolve, reject) => {
       connection.exec<T[]>(sql, params, (error?: Error, result?: T[]) => {

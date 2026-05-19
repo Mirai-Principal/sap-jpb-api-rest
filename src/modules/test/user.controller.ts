@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 
-import { hanaDbConnection } from "../services/hana-db.service";
-import sessionManager from "../services/session-manager.service";
+import { hanaDbConnection } from "../../services/hana-db.service";
+import sessionManager from "../../services/session-manager.service";
 
 export const getUsers = async (_req: Request, res: Response) => {
   try {

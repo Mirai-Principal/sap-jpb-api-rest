@@ -1,8 +1,10 @@
 import { Router } from "express";
 
-import { loginSap } from "../controllers/sap.controlller";
+import { transferFromPesajeToMat } from "../modules/StockTransfers/stockTransfers.controlller";
 
-export const sapRouter = Router();
+export const sap = Router();
 
-// GET /api/v1/auth/login - Login SAP
-sapRouter.get("/login", loginSap);
+// POST /api/v1/sap/stock-transfers - Transfer from pesaje to mat
+sap.post("/stock-transfers", async (req, res) => {
+    await transferFromPesajeToMat(req, res);
+});

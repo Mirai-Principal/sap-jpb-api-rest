@@ -1,0 +1,165 @@
+import { HanaRepository } from "../repository/stockTransfers.repository";
+import { ServiceLayerStockTransferClient } from "../service-layer/stockTransferClient";
+import {
+  DocSapInsertadoMsg,
+  EstadoLote,
+  MovimientoPesajeMsg,
+  TsBodegaMsg,
+  TsFromPesajeToMatMsg,
+} from "../schemas/schemas";
+import { mapFromPesajeToMat, mapMovimientosPesaje } from "./transferenciaStockMapper";
+import hanaDbConnection from "../../../services/hana-db.service";
+
+export class TransferenciaStockService {
+  //DI
+  private readonly repository: HanaRepository;
+  private readonly sapStockTransfer: ServiceLayerStockTransferClient;
+
+  constructor() {
+    this.repository = new HanaRepository(hanaDbConnection);
+
+    this.sapStockTransfer = new ServiceLayerStockTransferClient();
+  }
+
+  async transferFromPesajeToMat(me: TsFromPesajeToMatMsg): Promise<DocSapInsertadoMsg> {
+    try {
+      //1. Mapear el mensaje de entrada a TsBodegaMsg
+      const newMe = mapFromPesajeToMat(me);
+
+      //2. Transferir a ubicaciones
+      const ms = await this.transferToUbicaciones(newMe);
+
+      //3. Guardar log de movimientos de pesaje
+      if (!ms.Error) {
+        const movimientos = mapMovimientosPesaje(newMe, me.detalleLote.DocNumOf);
+        for (const movimiento of movimientos) {
+          movimiento.DocNumTs = ms.DocNum;
+          await this.setLogMovimientoPesaje(movimiento);
+        }
+      }
+
+      return ms;
+    } catch (error) {
+      return { DocNum: 0, Error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  private async transferToUbicaciones(me: TsBodegaMsg): Promise<DocSapInsertadoMsg> {
+    try {
+      me.Lote = quitarCodArticuloDelLote(me.Lote);
+
+      //2.1 Validar que la ubicación destino no sea igual a la de origen y obtener los ids origen y destino
+      for (const movimiento of me.movimientos) {
+        if (movimiento.UbicacionDesde === movimiento.UbicacionHasta) {
+          return {
+            DocNum: 0,
+            Error: `Error: La ubicación destino no puede ser igual a la de origen (${movimiento.UbicacionDesde})`,
+          };
+        }
+
+        if (movimiento.UbicacionDesde) {
+          movimiento.IdUbicacionDesde = await this.repository.getIdUbicacionByName(
+            movimiento.UbicacionDesde,
+          );
+        }
+
+        if (movimiento.UbicacionHasta) {
+          movimiento.IdUbicacionHasta = await this.repository.getIdUbicacionByName(
+            movimiento.UbicacionHasta,
+          );
+        }
+      }
+
+      //2.2 Validar que el lote exista y sea liberado
+      const estadoLote = await this.repository.getEstadoLote(me.Lote, me.CodArticulo);
+      if (estadoLote == null) {
+        throw new Error(`El lote '${me.Lote}' para el artículo '${me.CodArticulo}' no existe en la base de datos de SAP.`);
+      }
+
+      if (estadoLote !== String(EstadoLote.Liberado)) {
+        await this.ponerLoteTemporalmenteComoLiberado(me, estadoLote);
+      }
+
+      //2.3 Transferir a ubicaciones
+      const ms = await this.sapStockTransfer.transferirEntreUbicaciones(me);
+
+
+      //2.4 Regresar lotes al estado anterior
+      await this.repository.regresarLotesAlEstadoAnterior();
+
+      //2.5 Obtener el número de documento
+      if (!ms.Error && ms.Id) {
+        ms.DocNum = await this.repository.getDocNumById(ms.Id);
+        me.DocNumTS = ms.DocNum;
+      }
+
+      if (ms.Error) {
+        throw new Error(ms.Error);
+      }
+
+      return ms;
+    } catch (error) {
+      return {
+        DocNum: 0,
+        Error: `TransferenciaStockBusiness, TransferToUbicaciones:${error instanceof Error ? error.message : String(error)
+          }`,
+      };
+    }
+  }
+
+  private async ponerLoteTemporalmenteComoLiberado(
+    me: TsBodegaMsg,
+    codEstadoOriginalLote: string,
+  ): Promise<void> {
+    await this.repository.registrarModificacionLote(
+      me.CodArticulo,
+      me.Lote,
+      codEstadoOriginalLote,
+    );
+    await this.repository.updateEstadoLote(String(EstadoLote.Liberado), me.Lote, me.CodArticulo);
+  }
+
+  private async setLogMovimientoPesaje(me: MovimientoPesajeMsg): Promise<void> {
+    let idLotePesaje = await this.repository.getIdLotePesaje(
+      me.Lote,
+      me.CodArticulo,
+      me.DocNumOf,
+    );
+
+    if (idLotePesaje === 0) {
+      const obj = await this.repository.getIdStYCantAbiertaInsumo(me.DocNumOf, me.CodArticulo);
+      if (obj) {
+        await this.repository.setCabeceraLogLotesPesaje(
+          me.Lote,
+          me.CodArticulo,
+          obj.idSt,
+          obj.cantAbiertaInsumo,
+          me.DocNumOf
+        );
+        idLotePesaje = await this.repository.getMaxIdLotePesaje();
+      } else {
+        throw new Error(
+          `No existe cabecera JB_LOTES_PESAJE para lote ${me.Lote}, artículo ${me.CodArticulo}, OF ${me.DocNumOf} y no se pudo crear (no se encontró ST).`,
+        );
+      }
+    }
+
+    await this.repository.insertMovimientoLotePesaje({
+      idLotePesaje,
+      docNumTs: me.DocNumTs,
+      cantidad: me.Cantidad,
+      ubicacionDesde: me.UbicacionDesde,
+      ubicacionHasta: me.UbicacionHasta,
+    });
+  }
+}
+
+/**
+ * Quita el código de artículo del lote ("JB-230317151244&codArticulo=10500001")
+ * @param lote 
+ * @returns "JB-230317151244"
+ */
+function quitarCodArticuloDelLote(lote: string): string {
+  const parts = lote?.split("&") ?? [];
+  return parts.length === 2 ? parts[0] : lote;
+}
