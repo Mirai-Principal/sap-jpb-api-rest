@@ -34,4 +34,7 @@ export const env = {
     databaseName: process.env.HANA_DATABASE_NAME ?? "your_database_name",
     schema: process.env.HANA_SCHEMA ?? "your_schema_name",
   },
+
+  // Default Series for Stock Transfers
+  NroSerieTSPorDefecto: process.env.NroSerieTSPorDefecto ? parseInt(process.env.NroSerieTSPorDefecto) : 0,
 };

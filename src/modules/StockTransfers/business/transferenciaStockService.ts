@@ -44,7 +44,7 @@ export class TransferenciaStockService {
     }
   }
 
-  private async transferToUbicaciones(me: TsBodegaMsg): Promise<DocSapInsertadoMsg> {
+  async transferToUbicaciones(me: TsBodegaMsg): Promise<DocSapInsertadoMsg> {
     try {
       me.Lote = quitarCodArticuloDelLote(me.Lote);
 
@@ -75,9 +75,11 @@ export class TransferenciaStockService {
       if (estadoLote == null) {
         throw new Error(`El lote '${me.Lote}' para el artículo '${me.CodArticulo}' no existe en la base de datos de SAP.`);
       }
+      console.info(`Estado del lote ${me.Lote}: ${estadoLote}`);
 
       if (estadoLote !== String(EstadoLote.Liberado)) {
         await this.ponerLoteTemporalmenteComoLiberado(me, estadoLote);
+        console.info(`Lote ${me.Lote} puesto temporalmente como liberado`);
       }
 
       //2.3 Transferir a ubicaciones
@@ -86,6 +88,7 @@ export class TransferenciaStockService {
 
       //2.4 Regresar lotes al estado anterior
       await this.repository.regresarLotesAlEstadoAnterior();
+      console.info(`Lotes regresados al estado anterior`);
 
       //2.5 Obtener el número de documento
       if (!ms.Error && ms.Id) {
