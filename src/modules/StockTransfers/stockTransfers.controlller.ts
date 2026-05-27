@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { TransferenciaStockService } from "./business/transferenciaStockService";
+import { TransferenciaStockService } from "./business-logic/transferenciaStock";
 
 const transferenciaStockService = new TransferenciaStockService();
 

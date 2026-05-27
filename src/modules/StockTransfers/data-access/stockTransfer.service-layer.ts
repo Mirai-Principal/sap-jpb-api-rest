@@ -1,7 +1,6 @@
 import { DocSapInsertadoMsg, TsBodegaMsg } from "../schemas/schemas";
-import sessionManager from "../../../services/session-manager.service";
+import ServiceFacade from "../../../services/service.facade";
 import { env } from "../../../config/env";
-
 
 export interface HttpClient {
   post<T = unknown>(url: string, body: unknown): Promise<{ data: T }>;
@@ -14,7 +13,7 @@ export class ServiceLayerStockTransferClient {
     console.log("body", JSON.stringify(body, null, 2));
 
     try {
-      const response = await sessionManager.request("/StockTransfers", "POST", body) as { DocEntry?: number | string };
+      const response = await ServiceFacade.serviceLayer.request("/StockTransfers", "POST", body) as { DocEntry?: number | string };
       console.info("sapResult", response);
       return { Id: String(response?.DocEntry ?? ""), DocNum: 0 };
     }

@@ -17,7 +17,7 @@ interface SapLoginResponse {
  * Session manager for SAP B1
  * Handles authentication and session management
  */
-class sessionManager {
+class serviceLayerSession {
     private sessionId: string | null = null;
     private routeId: string | null = null;
 
@@ -101,4 +101,4 @@ class sessionManager {
 }
 
 // Singleton pattern
-export default new sessionManager();
+export default new serviceLayerSession();

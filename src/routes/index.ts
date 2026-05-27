@@ -1,10 +1,10 @@
 import { Router } from "express";
 
-import { userRouter } from "./user.routes";
+import { testRouter } from "./test.routes";
 import { sap } from "./sap.routers";
 
 export const apiRouter = Router();
 
-apiRouter.use("/users", userRouter);
+apiRouter.use("/test", testRouter);
 // apiRouter.use("/auth", sapRouter);
 apiRouter.use("/sap", sap);

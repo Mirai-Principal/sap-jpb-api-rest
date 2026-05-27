@@ -1,5 +1,5 @@
-import { HanaRepository } from "../repository/stockTransfers.repository";
-import { ServiceLayerStockTransferClient } from "../service-layer/stockTransferClient";
+import { HanaRepository } from "../data-access/stockTransfers.repository";
+import { ServiceLayerStockTransferClient } from "../data-access/stockTransfer.service-layer";
 import {
   DocSapInsertadoMsg,
   EstadoLote,
@@ -8,7 +8,6 @@ import {
   TsFromPesajeToMatMsg,
 } from "../schemas/schemas";
 import { mapFromPesajeToMat, mapMovimientosPesaje } from "./transferenciaStockMapper";
-import hanaDbConnection from "../../../services/hana-db.service";
 
 export class TransferenciaStockService {
   //DI
@@ -16,8 +15,7 @@ export class TransferenciaStockService {
   private readonly sapStockTransfer: ServiceLayerStockTransferClient;
 
   constructor() {
-    this.repository = new HanaRepository(hanaDbConnection);
-
+    this.repository = new HanaRepository();
     this.sapStockTransfer = new ServiceLayerStockTransferClient();
   }
 

@@ -1,11 +1,6 @@
-interface IHanaDbConnection {
-  query<T>(sql: string, params?: unknown[]): Promise<T[]>;
-  execute(sql: string, params?: unknown[]): Promise<void>;
-  scalar<T>(sql: string, params?: unknown[]): Promise<T | null>;
-}
+import ServiceFacade from "../../../services/service.facade";
 
 export class HanaRepository {
-  constructor(private readonly db: IHanaDbConnection) { }
 
   async getIdUbicacionByName(ubicacion: string): Promise<number> {
     const sql = `
@@ -13,7 +8,7 @@ export class HanaRepository {
       from "JbpVw_Ubicaciones"
       where "Ubicacion" = ?
     `;
-    const result = await this.db.scalar(sql, [ubicacion]);
+    const result = await ServiceFacade.hanaDb.scalar(sql, [ubicacion]);
     return this.toNumber(result);
   }
 
@@ -24,8 +19,7 @@ export class HanaRepository {
       where "DistNumber" = ?
         and "ItemCode" = ?
     `;
-    const estado = await this.db.scalar(sql, [lote, codArticulo]);
-    console.log('estado', estado);
+    const estado = await ServiceFacade.hanaDb.scalar(sql, [lote, codArticulo]);
     return estado == null ? null : String(estado);
   }
 
@@ -43,7 +37,7 @@ export class HanaRepository {
       )
       values(?, ?, ?, CURRENT_TIMESTAMP)
     `;
-    await this.db.execute(sql, [codArticulo, lote, codEstadoOriginalLote]);
+    await ServiceFacade.hanaDb.execute(sql, [codArticulo, lote, codEstadoOriginalLote]);
   }
 
   async updateEstadoLote(estado: string, lote: string, codArticulo: string): Promise<void> {
@@ -53,7 +47,7 @@ export class HanaRepository {
       where "DistNumber" = ?
         and "ItemCode" = ?
     `;
-    await this.db.execute(sql, [estado, lote, codArticulo]);
+    await ServiceFacade.hanaDb.execute(sql, [estado, lote, codArticulo]);
   }
 
   async regresarLotesAlEstadoAnterior(): Promise<void> {
@@ -64,7 +58,7 @@ export class HanaRepository {
         COD_ESTADO_ORIGINAL
       from JB_MODIFICACION_ESTADO_LOTE
     `;
-    const rows = await this.db.query<{
+    const rows = await ServiceFacade.hanaDb.query<{
       COD_ARTICULO: string;
       LOTE: string;
       COD_ESTADO_ORIGINAL: string;
@@ -82,7 +76,7 @@ export class HanaRepository {
       from "JbpVw_TransferenciaStock"
       where "Id" = ?
     `;
-    return this.toNumber(await this.db.scalar(sql, [id]));
+    return this.toNumber(await ServiceFacade.hanaDb.scalar(sql, [id]));
   }
 
   async getIdLotePesaje(lote: string, codArticulo: string, docNumOf: number): Promise<number> {
@@ -93,7 +87,7 @@ export class HanaRepository {
         and COD_ARTICULO = ?
         and DOC_NUM_OF = ?
     `;
-    return this.toNumber(await this.db.scalar(sql, [lote, codArticulo, docNumOf]));
+    return this.toNumber(await ServiceFacade.hanaDb.scalar(sql, [lote, codArticulo, docNumOf]));
   }
 
   async getIdStYCantAbiertaInsumo(docNumOf: number, codArticulo: string): Promise<{ idSt: number; cantAbiertaInsumo: number } | null> {
@@ -107,7 +101,7 @@ export class HanaRepository {
         t1."DocNumOrdenFabricacion" = ?
         and t0."CodArticulo" = ?
     `;
-    const rows = await this.db.query<{ Id: number; CantidadAbierta: number }>(sql, [docNumOf, codArticulo]);
+    const rows = await ServiceFacade.hanaDb.query<{ Id: number; CantidadAbierta: number }>(sql, [docNumOf, codArticulo]);
     if (rows && rows.length > 0) {
       return {
         idSt: this.toNumber(rows[0].Id),
@@ -122,12 +116,12 @@ export class HanaRepository {
       insert into JB_LOTES_PESAJE(LOTE, COD_ARTICULO, ID_ST, CANTIDAD, DOC_NUM_OF, FINALIZADO)
       values(?, ?, ?, ?, ?, 'N')
     `;
-    await this.db.execute(sql, [lote, codArticulo, idSt, cantAbiertaInsumo, docNumOf]);
+    await ServiceFacade.hanaDb.execute(sql, [lote, codArticulo, idSt, cantAbiertaInsumo, docNumOf]);
   }
 
   async getMaxIdLotePesaje(): Promise<number> {
     const sql = `select max(ID) as "MaxId" from JB_LOTES_PESAJE`;
-    return this.toNumber(await this.db.scalar(sql));
+    return this.toNumber(await ServiceFacade.hanaDb.scalar(sql));
   }
 
   async insertMovimientoLotePesaje(input: {
@@ -147,7 +141,7 @@ export class HanaRepository {
       )
       values(?, ?, ?, ?, ?)
     `;
-    await this.db.execute(sql, [
+    await ServiceFacade.hanaDb.execute(sql, [
       input.idLotePesaje,
       input.docNumTs,
       input.cantidad,
@@ -162,7 +156,7 @@ export class HanaRepository {
       where COD_ARTICULO = ?
         and LOTE = ?
     `;
-    await this.db.execute(sql, [codArticulo, lote]);
+    await ServiceFacade.hanaDb.execute(sql, [codArticulo, lote]);
   }
 
   private toNumber(value: unknown): number {

@@ -1,5 +1,4 @@
 import * as hanaClient from "@sap/hana-client";
-
 import { env } from "../config/env";
 
 interface HanaConnectionOptions {
@@ -40,21 +39,10 @@ interface HanaConnection {
  * @property scalar - Ejecuta consultas SQL que retornan un solo valor
  */
 class HanaDbConnection {
-  private static instance: HanaDbConnection;
   private connection: HanaConnection | null = null;
   private connectionPromise: Promise<HanaConnection> | null = null;
 
-  private constructor() { }
-
-  static getInstance() {
-    if (!HanaDbConnection.instance) {
-      HanaDbConnection.instance = new HanaDbConnection();
-    }
-
-    return HanaDbConnection.instance;
-  }
-
-  async connect() {
+  private async connect() {
     if (this.connection) {
       return Promise.resolve(this.connection);
     }
@@ -174,5 +162,4 @@ class HanaDbConnection {
   }
 }
 
-export const hanaDbConnection = HanaDbConnection.getInstance();
-export default hanaDbConnection;
+export default new HanaDbConnection();
