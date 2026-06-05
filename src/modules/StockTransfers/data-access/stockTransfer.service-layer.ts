@@ -2,27 +2,24 @@ import { DocSapInsertadoMsg, TsBodegaMsg } from "../schemas/schemas";
 import ServiceFacade from "../../../services/service.facade";
 import { env } from "../../../config/env";
 
-export interface HttpClient {
-  post<T = unknown>(url: string, body: unknown): Promise<{ data: T }>;
-}
-
 export class ServiceLayerStockTransferClient {
+  readonly logger = ServiceFacade.logger;
 
   async transferirEntreUbicaciones(datos: TsBodegaMsg): Promise<DocSapInsertadoMsg> {
     const body = this.buildStockTransferBody(datos);
-    console.log("body", JSON.stringify(body, null, 2));
-
+    console.info("body", JSON.stringify(body, null, 2))
+    this.logger.info("Iniciando transferencia para el lote: " + datos.Lote);
     try {
-      const response = await ServiceFacade.serviceLayer.request("/StockTransfers", "POST", body) as { DocEntry?: number | string };
-      console.info("sapResult", response);
-      return { Id: String(response?.DocEntry ?? ""), DocNum: 0 };
+      const response = await ServiceFacade.serviceLayer.request("/StockTransfers", "POST", body) as { DocEntry?: number, DocNum?: number };
+      this.logger.info("Se realizo la transferencia DocNum: " + response.DocNum + " para el lote: " + datos.Lote);
+      // console.log("response", JSON.stringify(response, null, 2));
+
+      return { Id: response?.DocEntry ?? 0, DocNum: response?.DocNum ?? 0 };
     }
     catch (error: any) {
-      console.error("Error en transferirEntreUbicaciones:", error);
-      return {
-        DocNum: 0,
-        Error: "Error en transferirEntreUbicaciones: " + error.message,
-      };
+      console.error("Error en transferirEntreUbicaciones para el lote:", datos.Lote, " error: ", error);
+      this.logger.error("Error en transferirEntreUbicaciones para el lote: " + datos.Lote + " - " + error);
+      throw new Error("Error en transferirEntreUbicaciones para el lote: " + datos.Lote + " - " + error.message);
     }
   }
 
@@ -30,8 +27,13 @@ export class ServiceLayerStockTransferClient {
     //identifico las lineas a agregarse
     const lineas = uniqueWarehouseLines(me);
 
+    //? fecha actual
+    const today = new Date();
+    const localDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
     let datos = {
-      DocDate: new Date().toISOString().slice(0, 10),
+      // DocDate: localDate,
+      DocDate: "2026-05-29",
       PriceList: -2,               //? Último precio determinado
       Comments: me.Responsable,
       //solo en la primera linea asigno las bodegas de la TS
@@ -43,7 +45,7 @@ export class ServiceLayerStockTransferClient {
           (movimiento) =>
             movimiento.CodBodegaDesde === linea.bd && movimiento.CodBodegaHasta === linea.bh,
         );
-        console.log("Datos que llegaron al reduce:", JSON.stringify(movimientosPorLinea, null, 2));
+        // console.log("Datos que llegaron al reduce:", JSON.stringify(movimientosPorLinea, null, 2));
         const cantidadLinea = movimientosPorLinea.reduce((sum, movimiento) => sum + movimiento.Cantidad, 0)
 
         return {
@@ -72,7 +74,6 @@ export class ServiceLayerStockTransferClient {
     if (env.NroSerieTSPorDefecto > 0) {
       (datos as any).Series = env.NroSerieTSPorDefecto;
     }
-    console.log("datos", datos);
     return datos;
   }
 }

@@ -1,5 +1,5 @@
 export interface DocSapInsertadoMsg {
-  Id?: string;
+  Id?: number;
   DocNum: number;
   Error?: string;
 }

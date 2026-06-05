@@ -48,7 +48,7 @@ class serviceLayerSession {
             await this.login();
             console.info("✅ Session reestablished");
             // retry automatico
-            return this.request(endpoint);
+            return this.request(endpoint, method, body);
         }
 
         // otros errores SAP

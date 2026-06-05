@@ -19,6 +19,7 @@ export const transferFromPesajeToMat = async (req: Request, res: Response) => {
 export const transferToUbicaciones = async (req: Request, res: Response) => {
     try {
         const result = await transferenciaStockService.transferToUbicaciones(req.body);
+        console.info("result", result);
         res.status(200).json(result);
     } catch (error: any) {
         console.error(error);

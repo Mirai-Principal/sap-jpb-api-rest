@@ -38,7 +38,9 @@ export class TransferenciaStockService {
 
       return ms;
     } catch (error) {
-      return { DocNum: 0, Error: error instanceof Error ? error.message : String(error) };
+      console.error(`Error en TransferFromPesajeToMat:${error instanceof Error ? error.message : String(error)}`);
+      this.sapStockTransfer.logger.error(`Error en TransferFromPesajeToMat: ${error instanceof Error ? error.message : String(error)}`)
+      throw new Error(`Error en TransferFromPesajeToMat:${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -49,10 +51,7 @@ export class TransferenciaStockService {
       //2.1 Validar que la ubicación destino no sea igual a la de origen y obtener los ids origen y destino
       for (const movimiento of me.movimientos) {
         if (movimiento.UbicacionDesde === movimiento.UbicacionHasta) {
-          return {
-            DocNum: 0,
-            Error: `Error: La ubicación destino no puede ser igual a la de origen (${movimiento.UbicacionDesde})`,
-          };
+          throw new Error(`Error: La ubicación destino no puede ser igual a la de origen (${movimiento.UbicacionDesde})`);
         }
 
         if (movimiento.UbicacionDesde) {
@@ -71,13 +70,17 @@ export class TransferenciaStockService {
       //2.2 Validar que el lote exista y sea liberado
       const estadoLote = await this.repository.getEstadoLote(me.Lote, me.CodArticulo);
       if (estadoLote == null) {
+        console.error(`El lote '${me.Lote}' para el artículo '${me.CodArticulo}' no existe en la base de datos de SAP.`);
+        this.sapStockTransfer.logger.error(`El lote '${me.Lote}' para el artículo '${me.CodArticulo}' no existe en la base de datos de SAP.`)
         throw new Error(`El lote '${me.Lote}' para el artículo '${me.CodArticulo}' no existe en la base de datos de SAP.`);
       }
-      console.info(`Estado del lote ${me.Lote}: ${estadoLote}`);
+      console.info(`Estado del lote ${me.Lote}: ${estadoLote == "0" ? "Liberado" : estadoLote == "1" ? "Acceso denegado" : "Bloqueado"}`);
+      this.sapStockTransfer.logger.info(`Estado del lote ${me.Lote}: ${estadoLote == "0" ? "Liberado" : estadoLote == "1" ? "Acceso denegado" : "Bloqueado"}`)
 
       if (estadoLote !== String(EstadoLote.Liberado)) {
         await this.ponerLoteTemporalmenteComoLiberado(me, estadoLote);
         console.info(`Lote ${me.Lote} puesto temporalmente como liberado`);
+        this.sapStockTransfer.logger.info(`Lote ${me.Lote} puesto temporalmente como liberado`)
       }
 
       //2.3 Transferir a ubicaciones
@@ -87,12 +90,7 @@ export class TransferenciaStockService {
       //2.4 Regresar lotes al estado anterior
       await this.repository.regresarLotesAlEstadoAnterior();
       console.info(`Lotes regresados al estado anterior`);
-
-      //2.5 Obtener el número de documento
-      if (!ms.Error && ms.Id) {
-        ms.DocNum = await this.repository.getDocNumById(ms.Id);
-        me.DocNumTS = ms.DocNum;
-      }
+      this.sapStockTransfer.logger.info(`Lotes ${me.Lote} regresados al estado anterior`)
 
       if (ms.Error) {
         throw new Error(ms.Error);
@@ -100,11 +98,9 @@ export class TransferenciaStockService {
 
       return ms;
     } catch (error) {
-      return {
-        DocNum: 0,
-        Error: `TransferenciaStockBusiness, TransferToUbicaciones:${error instanceof Error ? error.message : String(error)
-          }`,
-      };
+      console.error(`Error en TransferToUbicaciones:${error instanceof Error ? error.message : String(error)}`);
+      this.sapStockTransfer.logger.error(`Error en TransferToUbicaciones: ${error instanceof Error ? error.message : String(error)}`)
+      throw new Error(`Error en TransferToUbicaciones:${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -139,6 +135,7 @@ export class TransferenciaStockService {
         );
         idLotePesaje = await this.repository.getMaxIdLotePesaje();
       } else {
+        console.error(`No existe cabecera JB_LOTES_PESAJE para lote ${me.Lote}, artículo ${me.CodArticulo}, OF ${me.DocNumOf} y no se pudo crear (no se encontró ST).`);
         throw new Error(
           `No existe cabecera JB_LOTES_PESAJE para lote ${me.Lote}, artículo ${me.CodArticulo}, OF ${me.DocNumOf} y no se pudo crear (no se encontró ST).`,
         );
