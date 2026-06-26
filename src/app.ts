@@ -16,7 +16,10 @@ export const createApp = () => {
   const metricsMiddleware = promBundle({
     includeMethod: true,
     includePath: true,
-    includeStatusCode: true
+    includeStatusCode: true,
+    promClient: {
+      collectDefaultMetrics: {}
+    }
   });
   app.use(metricsMiddleware as any);
 
