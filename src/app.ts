@@ -8,13 +8,28 @@ import { openApiDocument } from "./docs/openapi";
 import { errorHandler } from "./middlewares/error-handler";
 import { notFoundHandler } from "./middlewares/not-found-handler";
 import { apiRouter } from "./routes";
+import promBundle from 'express-prom-bundle';
 
 export const createApp = () => {
   const app = express();
+  //metricas
+  const metricsMiddleware = promBundle({
+    includeMethod: true,
+    includePath: true,
+    includeStatusCode: true
+  });
+  app.use(metricsMiddleware as any);
 
+  //request logger
   app.use(morgan('dev'));
+
+  //security
   app.use(helmet());
+
+  //cors
   app.use(cors());
+
+  //body parser
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
