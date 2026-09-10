@@ -1,10 +1,11 @@
 import { Router } from "express";
 
-import { testRouter } from "./test.routes";
-import { sap } from "./sap.routers";
+import { TestRouter } from "./test.routes";
+import { Sap } from "./sap.routes";
+import { Users } from "./Users.routes";
 
 export const apiRouter = Router();
 
-apiRouter.use("/test", testRouter);
-// apiRouter.use("/auth", sapRouter);
-apiRouter.use("/sap", sap);
+apiRouter.use("/test", TestRouter);
+apiRouter.use("/sap", Sap);
+apiRouter.use("/users", Users);

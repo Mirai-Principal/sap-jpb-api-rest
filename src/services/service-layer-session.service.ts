@@ -21,8 +21,20 @@ class serviceLayerSession {
     private sessionId: string | null = null;
     private routeId: string | null = null;
 
-    // singleton
-    async request(endpoint: string, method: "GET" | "POST" | "PATCH" | "DELETE" = "GET", body?: unknown): Promise<unknown> {
+    /**
+     * Realiza una petición HTTP a la API de SAP Service Layer.
+     * Gestiona automáticamente la sesión, inyectando las cookies necesarias 
+     * (B1SESSION y ROUTEID) y reconectando en caso de que la sesión haya expirado.
+     * 
+     * @param endpoint - La ruta o recurso a consultar (ej. 'Users', 'Orders', 'Items?$top=10').
+     * @param method - El método HTTP de la petición. Por defecto es 'GET'.
+     * @param body - El cuerpo (payload) de la petición para métodos POST o PATCH. Opcional.
+     * @param additionalHeaders - Cabeceras HTTP adicionales que se deseen enviar (ej. para paginación OData). Opcional.
+     * @returns Una promesa que resuelve con los datos de respuesta enviados por SAP.
+     * @throws {Error} Lanza un error si la respuesta de SAP contiene un código de error (distinto de 301).
+     */
+    async request(endpoint: string, method: "GET" | "POST" | "PATCH" | "DELETE" = "GET", body?: unknown, additionalHeaders?: Record<string, string>): Promise<unknown> {
+        // singleton
         if (!this.sessionId) {
             await this.login();
         }
@@ -33,7 +45,8 @@ class serviceLayerSession {
                 method,
                 headers: {
                     "Content-Type": "application/json",
-                    Cookie: `B1SESSION=${this.sessionId}; ROUTEID=${this.routeId}`
+                    Cookie: `B1SESSION=${this.sessionId}; ROUTEID=${this.routeId}`,
+                    ...additionalHeaders
                 },
                 body: body ? JSON.stringify(body) : undefined
             }
@@ -48,7 +61,7 @@ class serviceLayerSession {
             await this.login();
             console.info("✅ Session reestablished");
             // retry automatico
-            return this.request(endpoint, method, body);
+            return this.request(endpoint, method, body, additionalHeaders);
         }
 
         // otros errores SAP
