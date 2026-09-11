@@ -1,31 +1,77 @@
 import type { Request, Response } from "express";
-import ServiceFacade from "../../services/service.facade";
+import { UserBusiness } from "./user.business";
 
-export const getUsers = async (req: Request, res: Response) => {
-  try {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
-    const endpoint = `Users?$select=InternalKey,UserCode,UserName,Locked,LastLogoutDate&$filter=LastLogoutDate ne null and LastLogoutDate ge '${currentYear}-${currentMonth}-01'`;
+export class UserController {
+    constructor(private userBusiness: UserBusiness = new UserBusiness()) {}
+    
+    getUsers = async (req: Request, res: Response) => {
+        try {
+            const users = await this.userBusiness.getUsers();
+            console.info("✅ Usuarios obtenidos exitosamente");
+            res.status(200).json({
+                message: "getUsers",
+                data: users,
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Error desconocido";
 
-    const sapResult = await ServiceFacade.serviceLayer.request(
-      endpoint,
-      "GET",
-      undefined,
-      { "Prefer": "odata.maxpagesize=500" }
-    );
-    console.info("✅ Usuarios obtenidos exitosamente");
+            console.error("❌ ERROR: obteniendo usuarios \n", error);
+            res.status(500).json({
+                message: "❌ Error al obtener los usuarios",
+                error: message,
+            });
+        }
+    };
 
-    res.status(200).json({
-      message: "getUsers",
-      data: sapResult,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Error desconocido";
+    unlockUser = async (req: Request, res: Response) => {
+        try {
+            const { UserCode } = req.body;
+            if (!UserCode) {
+                res.status(400).json({
+                    message: "❌ El campo UserCode es requerido",
+                });
+                return;
+            }
+            const result = await this.userBusiness.unlockUser(UserCode.toString());
+            console.info("✅ Usuario desbloqueado exitosamente");
+            res.status(200).json({
+                message: "unlockUser",
+                data: result,
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Error desconocido";
+            
+            console.error("❌ ERROR: desbloqueando usuario \n", error);
+            res.status(500).json({
+                message: "❌ Error al desbloquear el usuario",
+                error: message,
+            });
+        }
+    };
 
-    console.error("❌ ERROR: obteniendo usuarios \n", error);
-    res.status(500).json({
-      message: "❌ Error al obtener los usuarios",
-      error: message,
-    });
-  }
+    lockUser = async (req: Request, res: Response) => {
+        try {
+            const { UserCode } = req.body;
+            if (!UserCode) {
+                res.status(400).json({
+                    message: "❌ El campo UserCode es requerido",
+                });
+                return;
+            }
+            const result = await this.userBusiness.lockUser(UserCode.toString());
+            console.info("✅ Usuario bloqueado exitosamente");
+            res.status(200).json({
+                message: "lockUser",
+                data: result,
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Error desconocido";
+            
+            console.error("❌ ERROR: bloqueando usuario \n", error);
+            res.status(500).json({
+                message: "❌ Error al bloquear el usuario",
+                error: message,
+            });
+        }
+    };
 }

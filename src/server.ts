@@ -6,5 +6,5 @@ import { env } from "./config/env";
 const app = createApp();
 
 app.listen(env.port, () => {
-  console.log(`API REST escuchando en http://localhost:${env.port}`);
+  console.log(`API REST escuchando en el puerto ${env.port}`);
 });
