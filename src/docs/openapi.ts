@@ -7,8 +7,8 @@ export const openApiDocument = {
   },
   servers: [
     {
-      url: "http://localhost:3000",
-      description: "Servidor local",
+      url: "http://192.168.57.1:3300",
+      description: "Servidor de desarrollo",
     },
   ],
   tags: [
@@ -18,8 +18,16 @@ export const openApiDocument = {
     },
     {
       name: "Usuarios",
-      description: "Operaciones de ejemplo para usuarios",
+      description: "Operaciones para gestion de usuarios",
     },
+    {
+      name: "SAP",
+      description: "Operaciones integradas con SAP (Transferencias)",
+    },
+    {
+      name: "Test",
+      description: "Endpoints para pruebas de Service Layer",
+    }
   ],
   paths: {
     "/": {
@@ -66,6 +74,10 @@ export const openApiDocument = {
                 schema: {
                   type: "object",
                   properties: {
+                    message: {
+                      type: "string",
+                      example: "getUsers",
+                    },
                     data: {
                       type: "array",
                       items: {
@@ -80,51 +92,150 @@ export const openApiDocument = {
         },
       },
     },
-    "/api/v1/users/{id}": {
-      get: {
+    "/api/v1/users/unlock": {
+      patch: {
         tags: ["Usuarios"],
-        summary: "Obtener usuario por ID",
+        summary: "Desbloquear un usuario de SAP",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  UserCode: {
+                    type: "string",
+                    example: "manager"
+                  }
+                },
+                required: ["UserCode"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Usuario desbloqueado exitosamente",
+          },
+          "400": {
+            description: "Falta el campo UserCode",
+          },
+          "500": {
+            description: "Error al desbloquear el usuario",
+          }
+        }
+      }
+    },
+    "/api/v1/users/lock": {
+      patch: {
+        tags: ["Usuarios"],
+        summary: "Bloquear un usuario de SAP",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  UserCode: {
+                    type: "string",
+                    example: "manager"
+                  }
+                },
+                required: ["UserCode"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Usuario bloqueado exitosamente",
+          },
+          "400": {
+            description: "Falta el campo UserCode",
+          },
+          "500": {
+            description: "Error al bloquear el usuario",
+          }
+        }
+      }
+    },
+    "/api/v1/sap/tsFromPesajeToMat": {
+      post: {
+        tags: ["SAP"],
+        summary: "Transferencia de Stock de Pesaje a Mat",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                description: "Payload de la transferencia",
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Transferencia realizada con exito",
+          },
+          "500": {
+            description: "Error al transferir",
+          }
+        }
+      }
+    },
+    "/api/v1/sap/tsToUbicaciones": {
+      post: {
+        tags: ["SAP"],
+        summary: "Transferencia de Stock entre Ubicaciones",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                description: "Payload de la transferencia a ubicaciones",
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Transferencia realizada con exito",
+          },
+          "500": {
+            description: "Error al transferir",
+          }
+        }
+      }
+    },
+    "/api/v1/test/{query}": {
+      get: {
+        tags: ["Test"],
+        summary: "Probar consulta al Service Layer de SAP",
         parameters: [
           {
-            name: "id",
+            name: "query",
             in: "path",
             required: true,
             schema: {
               type: "string",
-              example: "1",
+              example: "Items"
             },
-            description: "Identificador del usuario",
-          },
+            description: "Endpoint a consultar en el Service Layer"
+          }
         ],
         responses: {
           "200": {
-            description: "Usuario encontrado",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    data: {
-                      $ref: "#/components/schemas/User",
-                    },
-                  },
-                },
-              },
-            },
+            description: "Resultado de la consulta",
           },
-          "404": {
-            description: "Usuario no encontrado",
-            content: {
-              "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/ErrorResponse",
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+          "500": {
+            description: "Error en la peticion al Service Layer",
+          }
+        }
+      }
+    }
   },
   components: {
     schemas: {
@@ -145,17 +256,19 @@ export const openApiDocument = {
             example: "demo@example.com",
           },
         },
-        required: ["id", "name", "email"],
       },
       ErrorResponse: {
         type: "object",
         properties: {
           message: {
             type: "string",
-            example: "Usuario no encontrado",
+            example: "Ocurrio un error",
           },
+          error: {
+            type: "string",
+            example: "Detalle del error",
+          }
         },
-        required: ["message"],
       },
     },
   },

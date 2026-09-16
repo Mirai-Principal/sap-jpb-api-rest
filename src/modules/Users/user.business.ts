@@ -17,6 +17,10 @@ export class UserBusiness {
     }
 
     async unlockUser(userCode: string) {
+        if (userCode.toLowerCase() === process.env.SAP_USERNAME?.toLowerCase()) {
+            throw new Error(`Accion denegada: No puedes desbloquear al usuario de servicio de la API (${userCode})`);
+        }
+
         // 1. Buscamos el usuario por su UserCode para obtener su InternalKey
         const searchResult = (await serviceFacade.serviceLayer.request(
             `Users?$filter=UserCode eq '${userCode}'&$select=InternalKey,Locked`,
@@ -47,6 +51,10 @@ export class UserBusiness {
     }
 
     async lockUser(userCode: string) {
+        if (userCode.toLowerCase() === process.env.SAP_USERNAME?.toLowerCase()) {
+            throw new Error(`Accion denegada: No puedes bloquear al usuario de servicio de la API (${userCode})`);
+        }
+
         // 1. Buscamos el usuario por su UserCode para obtener su InternalKey
         const searchResult = (await serviceFacade.serviceLayer.request(
             `Users?$filter=UserCode eq '${userCode}'&$select=InternalKey,Locked`

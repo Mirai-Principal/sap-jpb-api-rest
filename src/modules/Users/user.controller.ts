@@ -38,7 +38,13 @@ export class UserController {
                 message: "unlockUser",
                 data: result,
             });
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message.includes('-5002')) {
+                res.status(409).json({ // 409 Conflict
+                    message: "No se puede desbloquear al usuario porque probablemente tiene una sesión activa o está en uso."
+                });
+                return;
+            }
             const message = error instanceof Error ? error.message : "Error desconocido";
             
             console.error("❌ ERROR: desbloqueando usuario \n", error);
@@ -64,7 +70,13 @@ export class UserController {
                 message: "lockUser",
                 data: result,
             });
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message.includes('-5002')) {
+                res.status(409).json({ // 409 Conflict
+                    message: "No se puede bloquear al usuario porque probablemente tiene una sesión activa o está en uso."
+                });
+                return;
+            }
             const message = error instanceof Error ? error.message : "Error desconocido";
             
             console.error("❌ ERROR: bloqueando usuario \n", error);
