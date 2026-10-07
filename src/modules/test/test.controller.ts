@@ -5,8 +5,13 @@ import ServiceFacade from "../../services/service.facade";
 
 export const test = async (req: Request, res: Response) => {
   try {
-    const endpoint = req.url.replace(/^\/+/, '');
-    const sapResult = await ServiceFacade.serviceLayer.request(endpoint);
+
+    const endpoint = req.body.query;
+    const method = req.body.method;
+    const body = req.body.body;
+    const headers = req.body.headers;
+
+    const sapResult = await ServiceFacade.serviceLayer.request(endpoint, method, body, headers);
     console.info("✅ Items obtenidos exitosamente");
 
     res.status(200).json({
