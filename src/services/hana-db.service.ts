@@ -114,7 +114,7 @@ class HanaDbConnection {
   ): Promise<T[]> {
     const connection = await this.connect();
 
-    // console.info("✅ Ejecutando consulta SAP HANA DB:", sql);
+    console.info("✅ Ejecutando consulta SAP HANA DB");
 
     return new Promise<T[]>((resolve, reject) => {
       connection.exec<T[]>(sql, params, (error?: Error, result?: T[]) => {

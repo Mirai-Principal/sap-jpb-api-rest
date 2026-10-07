@@ -1,8 +1,9 @@
 import { Router } from "express";
 
-import { test } from "../modules/test/test.controller";
+import { SfaController } from "../modules/sfa/sfa.controller";
 
 export const SfaRouter = Router();
+const sfaController = new SfaController();
 
-// para probar el servicelayer
-SfaRouter.post("/", test);
+SfaRouter.post("/servicelayer", sfaController.serviceLayer);
+SfaRouter.post("/hanadb", sfaController.hanaDB);
