@@ -42,7 +42,7 @@ export class SfaController {
       }
 
       //solo q permita select 
-      if (!query.toLowerCase().startsWith("select ")) {
+      if (!query.toLowerCase().startsWith("select") || !query.toUpperCase().startsWith("SELECT")) {
         res.status(400).json({
           message: "❌ Solo se permiten consultas SELECT",
         });

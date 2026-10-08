@@ -17,18 +17,18 @@ export const apiKeyMiddleware: RequestHandler = (req, res, next) => {
 
   if (!apiKey) {
     res.status(401).json({
-      message: "❌ Acceso no autorizado: el header 'x-api-key' es requerido",
+      message: "❌ Acceso no autorizado: APIKey es requerido",
     });
     return;
   }
 
   if (apiKey.trim() !== expectedApiKey.trim()) {
     res.status(401).json({
-      message: "❌ Acceso denegado: API Key inválida",
+      message: "❌ Acceso denegado: APIKey inválida",
     });
     return;
   }
 
-  console.info(`🔑 API Key validada correctamente para [${req.method}] ${req.originalUrl}`);
+  console.info(`🔑 APIKey validada correctamente para [${req.method}] ${req.originalUrl}`);
   next();
 };
