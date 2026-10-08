@@ -114,12 +114,12 @@ class HanaDbConnection {
   ): Promise<T[]> {
     const connection = await this.connect();
 
-    console.info("✅ Ejecutando consulta SAP HANA DB");
+    console.info("✅ Ejecutando consulta SAP HANA DB: ", sql, params);
 
     return new Promise<T[]>((resolve, reject) => {
       connection.exec<T[]>(sql, params, (error?: Error, result?: T[]) => {
         if (error) {
-          console.error("❌ Error ejecutando consulta SAP HANA DB:", error.message);
+          console.error("❌ Error ejecutando consulta SAP HANA DB:", sql, params, error.message);
           reject(error);
           return;
         }
@@ -132,12 +132,12 @@ class HanaDbConnection {
   async execute(sql: string, params: unknown[] = []): Promise<void> {
     const connection = await this.connect();
 
-    console.info("✅ Ejecutando comando SAP HANA DB:", sql);
+    console.info("✅ Ejecutando comando SAP HANA DB:", sql, params);
 
     await new Promise<void>((resolve, reject) => {
       connection.execute(sql, params, (error?: Error) => {
         if (error) {
-          console.error("❌ Error ejecutando comando SAP HANA DB:", error.message);
+          console.error("❌ Error ejecutando comando SAP HANA DB:", sql, params, error.message);
           reject(error);
           return;
         }
