@@ -5,6 +5,7 @@ import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
 
 import { openApiDocument } from "./docs/openapi";
+import { apiKeyMiddleware } from "./middlewares/api-key.middleware";
 import { errorHandler } from "./middlewares/error-handler";
 import { notFoundHandler } from "./middlewares/not-found-handler";
 import { apiRouter } from "./routes";
@@ -50,6 +51,9 @@ export const createApp = () => {
       timestamp: new Date().toISOString(),
     });
   });
+
+  // Autenticación global por API Key
+  app.use(apiKeyMiddleware);
 
   // Rutas de la API
   app.use("/api/v1", apiRouter);

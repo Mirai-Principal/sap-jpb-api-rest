@@ -1,19 +1,10 @@
 import type { Request, Response } from "express";
 
 import serviceFacade from "../../services/service.facade";
-import { ApikeyController } from "../Configuracion/Apikey/Apikey.controller";
-
 
 export class SfaController {
-  constructor(private apikeyController: ApikeyController = new ApikeyController()) { }
-
   serviceLayer = async (req: Request, res: Response) => {
     try {
-      const acceso = this.apikeyController.validateApiKey(req, res)
-      if (!acceso)
-        return res.status(401).json({
-          message: "❌ Acceso denegado",
-        });
 
       const endpoint = req.body.query;
       const method = req.body.method;
@@ -40,13 +31,6 @@ export class SfaController {
 
 
   hanaDB = async (req: Request, res: Response) => {
-
-    const acceso = this.apikeyController.validateApiKey(req, res)
-    if (!acceso)
-      return res.status(401).json({
-        message: "❌ Acceso denegado",
-      });
-
     try {
       const { query, params = [] } = req.body;
 
