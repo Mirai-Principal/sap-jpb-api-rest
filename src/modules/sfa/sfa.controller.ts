@@ -21,7 +21,7 @@ export class SfaController {
       const headers = req.body.headers;
 
       const sapResult = await serviceFacade.serviceLayer.request(endpoint, method, body, headers);
-      console.info("✅ Items obtenidos exitosamente");
+      console.info("✅ Petición realizada correctamente");
 
       res.status(200).json({
         message: "serviceLayer",

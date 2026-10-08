@@ -15,7 +15,7 @@ import serviceFacade from "../../../services/service.facade";
 export class ApikeyBusiness {
 
     generateApiKey = ():string =>{
-        return crypto.randomBytes(32).toString("hex");
+        return crypto.randomBytes(32).toString("hex").toUpperCase();
     }
 
     getHashApiKey = ():string => {

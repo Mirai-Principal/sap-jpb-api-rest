@@ -22,14 +22,32 @@ export class ApikeyController {
         }
     };
 
-    validateApiKey = (req: Request, res: Response)=>{
-        const apiKey = req.header("x-api-key");
-        const apiSfa = "cc4ba44bfbb9c41002ed0c9b3d5841e4307f98398b4c55f86b9d889f339b29dd"
-        if(apiKey == apiSfa)
-            return true
-        else
-            return false
-    }
+    validateApiKey = async (req: Request, res: Response) => {
+        try {
+            const apiKey = req.header("x-api-key");
+
+            //temporal mientras se implementa 
+            const apiSfa = "1999295F480CE1A208EC264A0C9CA82D6D1899485664EAA479360D6F2566A2D1"
+
+            if (!apiKey) {
+                res.status(400).json({
+                    message: "❌ El campo x-api-key es requerido",
+                });
+                return;
+            }
+
+            const result = apiKey == apiSfa ? true : false;
+            console.info("✅ Apikey validada exitosamente");
+            return result;  
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Error desconocido";
+            console.error("❌ Error: validando Apikey ", error);
+            res.status(500).json({
+                message: "❌ Error al validar la Apikey",
+                error: message,
+            });
+        }
+    };
 
 
 }
