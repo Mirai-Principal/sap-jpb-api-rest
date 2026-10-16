@@ -1,4 +1,5 @@
 import serviceFacade from "../../services/service.facade";
+import { ProductTreeLine } from "./listaMateriales.schemas";
 
 
 export class ListaMaterialesBusiness {
@@ -88,6 +89,60 @@ export class ListaMaterialesBusiness {
                 "PATCH",
                 {
                     ProductTreeLines: remainingLines,
+                },
+                {
+                    "B1S-ReplaceCollectionsOnPatch": "true",
+                }
+            );
+
+            return sapResult;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    // insertar una linea en la lista de materiales
+    async insertProductTreeLine(TreeCode: string, line: ProductTreeLine) {
+        try {
+            // 1. Obtener la lista de materiales actual con sus líneas y etapas
+            const currentTree = await this.getListaMaterialesPorProducto(TreeCode) as {
+                ProductTreeLines?: Array<Record<string, unknown>>;
+                ProductTreeStages?: Array<{ StageID: number; [key: string]: unknown }>;
+            };
+
+            const existingLines = currentTree?.ProductTreeLines || [];
+            const stages = currentTree?.ProductTreeStages || [];
+
+            // 2. Validar que el ItemCode no esté duplicado en la lista de materiales
+            const isDuplicate = existingLines.some(
+                (l) => l.ItemCode?.toString().trim().toUpperCase() === line.ItemCode.trim().toUpperCase()
+            );
+
+            if (isDuplicate) {
+                throw new Error(`El artículo '${line.ItemCode}' ya existe en la lista de materiales '${TreeCode}'`);
+            }
+
+            // 3. Manejo de StageID: Si el árbol tiene etapas definidas, cada línea DEBE tener un StageID
+            const newLine = { ...line };
+            if (stages.length > 0) {
+                if (newLine.StageID === undefined || newLine.StageID === null) {
+                    // Tomamos el StageID de la última línea, o de la primera etapa disponible
+                    const fallbackStageID = (existingLines[existingLines.length - 1]?.StageID as number) 
+                        ?? stages[0]?.StageID;
+                    newLine.StageID = fallbackStageID;
+                }
+            }
+
+            // 4. Unir las líneas existentes con la nueva línea a insertar
+            const updatedLines = [...existingLines, newLine];
+
+            // 5. Enviar PATCH con el header B1S-ReplaceCollectionsOnPatch: true
+            const endpoint = `ProductTrees('${TreeCode}')`;
+            const sapResult = await serviceFacade.serviceLayer.request(
+                endpoint,
+                "PATCH",
+                {
+                    ProductTreeLines: updatedLines,
                 },
                 {
                     "B1S-ReplaceCollectionsOnPatch": "true",

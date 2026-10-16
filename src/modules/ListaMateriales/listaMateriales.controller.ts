@@ -96,16 +96,56 @@ export class ListaMaterialesController {
             }
 
             const result = await this.listaMaterialesBusiness.deleteProductTreeLine(TreeCode, ChildNum)
-            console.info("✅ Línea eliminada exitosamente de la lista de materiales")
+            console.info("✅ Componente eliminado exitosamente de la lista de materiales")
             res.status(200).json({
-                message: "Línea eliminada exitosamente",
+                message: "Componente eliminado exitosamente",
                 data: result,
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : "Error desconocido"
-            console.error("❌ Error: eliminando línea en la Lista de materiales ", error)
+            console.error("❌ Error: eliminando componente en la Lista de materiales ", error)
             res.status(500).json({
-                message: "❌ Error al eliminar la línea en la Lista de materiales",
+                message: "❌ Error al eliminar el componente en la Lista de materiales",
+                error: message,
+            });
+        }
+    };
+
+    // insert a ProductTreeLine
+    insertProductTreeLine = async (req: Request, res: Response) => {
+        try {
+            const TreeCode = req.params.TreeCode?.toString();
+            const { ItemCode, Quantity, Warehouse, StageID, StageId, Price, PriceList } = req.body;
+
+            if (!TreeCode || !ItemCode || Quantity === undefined || Quantity === null || isNaN(Number(Quantity))) {
+                res.status(400).json({
+                    message: "❌ Los campos TreeCode, ItemCode y Quantity son requeridos",
+                });
+                return;
+            }
+
+            const stageIdValue = StageID ?? StageId;
+
+            const line = {
+                ItemCode: ItemCode.toString().trim(),
+                Quantity: Number(Quantity),
+                ...(Warehouse ? { Warehouse: Warehouse.toString().trim() } : {}),
+                ...(stageIdValue !== undefined && stageIdValue !== null ? { StageID: Number(stageIdValue) } : {}),
+                ...(Price !== undefined ? { Price: Number(Price) } : {}),
+                ...(PriceList !== undefined ? { PriceList: Number(PriceList) } : {}),
+            };
+
+            const result = await this.listaMaterialesBusiness.insertProductTreeLine(TreeCode, line);
+            console.info("✅ Componente registrado exitosamente en la lista de materiales");
+            res.status(200).json({
+                message: "Componente registrado exitosamente",
+                data: result,
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Error desconocido";
+            console.error("❌ Error: registrando componente en la Lista de materiales ", error);
+            res.status(500).json({
+                message: "❌ Error al registrar el componente en la Lista de materiales",
                 error: message,
             });
         }

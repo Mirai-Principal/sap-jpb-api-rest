@@ -8,4 +8,5 @@ const listaMaterialesController = new ListaMaterialesController();
 ListaMateriales.get("/buscar-producto", listaMaterialesController.buscarProducto);
 ListaMateriales.get("/:TreeCode", listaMaterialesController.getListaMaterialesPorProducto);
 ListaMateriales.patch("/:TreeCode", listaMaterialesController.updateQuantity);
+ListaMateriales.post("/:TreeCode", listaMaterialesController.insertProductTreeLine);
 ListaMateriales.delete("/:TreeCode/:ChildNum", listaMaterialesController.deleteProductTreeLine);
