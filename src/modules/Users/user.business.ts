@@ -1,7 +1,12 @@
 import serviceFacade from "../../services/service.facade";
+import { UserRepository } from "./user.repository";
+import { UserResponse } from "./user.schema";
+
 
 
 export class UserBusiness {
+    constructor(private userRepository: UserRepository = new UserRepository()) {}
+
     async getUsers() {
         const currentYear = new Date().getFullYear();
         const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
@@ -16,74 +21,38 @@ export class UserBusiness {
         return sapResult;
     }
 
-    async unlockUser(userCode: string) {
-        if (userCode.toLowerCase() === process.env.SAP_USERNAME?.toLowerCase()) {
-            throw new Error(`Accion denegada: No puedes desbloquear al usuario de servicio de la API (${userCode})`);
-        }
-
-        // 1. Buscamos el usuario por su UserCode para obtener su InternalKey
-        const searchResult = (await serviceFacade.serviceLayer.request(
-            `Users?$filter=UserCode eq '${userCode}'&$select=InternalKey,Locked`,
-        )) as { value?: Array<{ InternalKey: number, Locked: string }> };
-
-        const user = searchResult?.value?.[0];
-        if (!user) {
+    async unlockUser(userCode: string): Promise<UserResponse> {
+        const user = await this.userRepository.getUserByCode(userCode);
+        if (!user) 
             throw new Error(`Usuario "${userCode}" no fue encontrado en SAP`);
-        }
-        //compronbar si esta desbloqueado
-        if (user.Locked === "tNO") {
+        if (user.Locked === "N") 
             throw new Error(`Usuario "${userCode}" ya se encuentra desbloqueado`);
-        }
-        // 2. Con el InternalKey numérico, ejecutamos el PATCH en SAP
-        const endpoint = `Users(${user.InternalKey})`;
-        const sapResult = await serviceFacade.serviceLayer.request(
-            endpoint,
-            "PATCH",
-            { Locked: "tNO" }
-        );
+
+        await this.userRepository.updateLockStatus(user.USERID, "N");
 
         return {
-            internalKey: user.InternalKey,
-            userCode,
+            internalKey: user.USERID,
+            userCode: user.USER_CODE,
             status: "unlocked",
-            sapResult,
         };
     }
 
-    async lockUser(userCode: string) {
-        if (userCode.toLowerCase() === process.env.SAP_USERNAME?.toLowerCase()) {
+    async lockUser(userCode: string): Promise<UserResponse> {
+        if (userCode.toLowerCase() === process.env.SAP_USERNAME?.toLowerCase()) 
             throw new Error(`Accion denegada: No puedes bloquear al usuario de servicio de la API (${userCode})`);
-        }
 
-        // 1. Buscamos el usuario por su UserCode para obtener su InternalKey
-        const searchResult = (await serviceFacade.serviceLayer.request(
-            `Users?$filter=UserCode eq '${userCode}'&$select=InternalKey,Locked`
-        )) as { value?: Array<{ InternalKey: number, Locked: string }> };
-
-        const user = searchResult?.value?.[0];
-        if (!user) {
+        const user = await this.userRepository.getUserByCode(userCode);
+        if (!user) 
             throw new Error(`Usuario "${userCode}" no fue encontrado en SAP`);
-        }
-        //compronbar si esta bloqueado
-        if (user.Locked === "tYES") {
+        if (user.Locked === "Y") 
             throw new Error(`Usuario "${userCode}" ya se encuentra bloqueado`);
-        }
 
-        // 2. Con el InternalKey numérico, ejecutamos el PATCH en SAP
-        const endpoint = `Users(${user.InternalKey})`;
-        const sapResult = await serviceFacade.serviceLayer.request(
-            endpoint,
-            "PATCH",
-            { Locked: "tYES" }
-        );
+        await this.userRepository.updateLockStatus(user.USERID, "Y");
 
         return {
-            internalKey: user.InternalKey,
-            userCode,
+            internalKey: user.USERID,
+            userCode: user.USER_CODE,
             status: "locked",
-            sapResult,
         };
     }
-
-
 }
