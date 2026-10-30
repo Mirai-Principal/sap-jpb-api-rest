@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'backend-produccion',
+      name: 'produccion',
       script: './dist/server.js',
       instances: 1,
       exec_mode: 'fork',
@@ -11,7 +11,7 @@ module.exports = {
       }
     },
     {
-      name: 'backend-dev',
+      name: 'dev',
       script: './dist/server.js',
       instances: 1,
       exec_mode: 'fork',
@@ -21,7 +21,7 @@ module.exports = {
       }
     },
     {
-      name: 'backend-sfa',
+      name: 'sfa',
       script: './dist/server.js',
       instances: 1,
       exec_mode: 'fork',
