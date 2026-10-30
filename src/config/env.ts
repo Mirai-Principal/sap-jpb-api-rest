@@ -13,6 +13,8 @@ const parsePort = (value: string | undefined, fallback: number) => {
 };
 
 export const env = {
+  path: process.env.ENV_FILE || '.env',   //config para PM2 para leer el .env correcto
+
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: parsePort(process.env.PORT, 3000),
   ignoreSsl: process.env.IGNORE_SSL ? "true" : "false",
