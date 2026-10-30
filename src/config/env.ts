@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+
+
 const parsePort = (value: string | undefined, fallback: number) => {
   if (!value) {
     return fallback;
@@ -11,6 +14,10 @@ const parsePort = (value: string | undefined, fallback: number) => {
 
   return port;
 };
+
+dotenv.config({
+    path: process.env.ENV_FILE || '.env'
+});
 
 export const env = {
   path: process.env.ENV_FILE || '.env',   //config para PM2 para leer el .env correcto
