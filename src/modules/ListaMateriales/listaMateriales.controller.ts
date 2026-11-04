@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { ListaMaterialesBusiness } from "./listaMateriales.business";
+import { EstadoAprobacionRegulatoria } from "./listaMateriales.schemas";
 
 export class ListaMaterialesController {
     constructor(private listaMaterialesBusiness: ListaMaterialesBusiness = new ListaMaterialesBusiness()) { }
@@ -150,4 +151,40 @@ export class ListaMaterialesController {
             });
         }
     };
+
+    //aprobar/rechazar cambios por asuntos regulatorios
+    updateAprobarCambios = async (req: Request, res: Response) => {
+        try {
+            const TreeCode = req.params.TreeCode?.toString();
+            const { U_JB_APROBADO_ASUNTOS_REGULATORIOS } = req.body;
+            if (!TreeCode || !U_JB_APROBADO_ASUNTOS_REGULATORIOS) {
+                res.status(400).json({
+                    message: "❌ El campo TreeCode y U_JB_APROBADO_ASUNTOS_REGULATORIOS es requerido",
+                });
+                return;
+            }
+            const estadoNormalizado : EstadoAprobacionRegulatoria = U_JB_APROBADO_ASUNTOS_REGULATORIOS.toString().trim().toUpperCase();
+            if (estadoNormalizado !== "SI" && estadoNormalizado !== "NO") {
+                res.status(400).json({
+                    message: "❌ El campo U_JB_APROBADO_ASUNTOS_REGULATORIOS debe ser 'SI' o 'NO'",
+                });
+                return;
+            }
+
+            const result = await this.listaMaterialesBusiness.updateAprobarCambios(TreeCode, estadoNormalizado);
+            console.info("✅ Cambios aprobados exitosamente por asuntos regulatorios");
+            res.status(200).json({
+                message: "Cambios aprobados exitosamente por asuntos regulatorios",
+                data: result,
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Error desconocido";
+            console.error("❌ Error: aprobando cambios por asuntos regulatorios", error);
+            res.status(500).json({
+                message: "❌ Error al aprobar los cambios por asuntos regulatorios",
+                error: message,
+            });
+        }
+    };
+    
 }

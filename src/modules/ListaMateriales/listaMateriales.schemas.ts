@@ -1,3 +1,4 @@
+
 export interface ProductTreeLine {
     ItemCode: string;
     Quantity: number;
@@ -7,3 +8,5 @@ export interface ProductTreeLine {
     PriceList?: number;
     [key: string]: unknown;
 }
+
+export type EstadoAprobacionRegulatoria = "SI" | "NO";

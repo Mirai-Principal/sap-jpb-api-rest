@@ -1,5 +1,5 @@
 import serviceFacade from "../../services/service.facade";
-import { ProductTreeLine } from "./listaMateriales.schemas";
+import { EstadoAprobacionRegulatoria, ProductTreeLine } from "./listaMateriales.schemas";
 
 
 export class ListaMaterialesBusiness {
@@ -52,6 +52,10 @@ export class ListaMaterialesBusiness {
                     ]
                 }
             );
+
+            // Cada cambio a la lista de materiales restablece la aprobación regulatoria a "NO"
+            await this.updateAprobarCambios(TreeCode, "NO");
+
             return sapResult;
         } catch (error) {
             throw error;
@@ -94,6 +98,9 @@ export class ListaMaterialesBusiness {
                     "B1S-ReplaceCollectionsOnPatch": "true",
                 }
             );
+
+            // Cada cambio a la lista de materiales restablece la aprobación regulatoria a "NO"
+            await this.updateAprobarCambios(TreeCode, "NO");
 
             return sapResult;
         } catch (error) {
@@ -149,6 +156,26 @@ export class ListaMaterialesBusiness {
                 }
             );
 
+            // Cada cambio a la lista de materiales restablece la aprobación regulatoria a "NO"
+            await this.updateAprobarCambios(TreeCode, "NO");
+
+            return sapResult;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    //aprobar/rechazar cambios por asuntos regulatorios
+    async updateAprobarCambios(TreeCode: string, U_JB_APROBADO_ASUNTOS_REGULATORIOS: EstadoAprobacionRegulatoria) {
+        try {
+            const endpoint = `ProductTrees('${TreeCode}')`;
+            const sapResult = await serviceFacade.serviceLayer.request(
+                endpoint,
+                "PATCH",
+                {
+                    U_JB_APROBADO_ASUNTOS_REGULATORIOS
+                }
+            );
             return sapResult;
         } catch (error) {
             throw error;
